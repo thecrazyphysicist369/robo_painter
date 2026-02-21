@@ -62,11 +62,11 @@ export function RoboticArm({ angles }) {
       <group ref={shoulderRef} position={[0, 0, 0]} rotation={[0, 0, 0]}>
         <mesh position={[0, 0, 0.15]} castShadow>
           <cylinderGeometry args={[0.12, 0.2, 0.3, 16]} />
-          <meshStandardMaterial color="#1a1a1a" metalness={0.4} roughness={0.7} />
+          <meshStandardMaterial color="#ffffff" metalness={0.4} roughness={0.7} />
         </mesh>
         <mesh position={[0, 0.4, 0.35]} castShadow>
           <boxGeometry args={[0.12, 0.8, 0.1]} />
-          <meshStandardMaterial color="#1a1a1a" metalness={0.4} roughness={0.7} />
+          <meshStandardMaterial color="#ffffff" metalness={0.4} roughness={0.7} />
         </mesh>
 
         {/* Elbow joint (pitch, rotation X) */}
@@ -77,7 +77,7 @@ export function RoboticArm({ angles }) {
           </mesh>
           <mesh position={[0, 0.35, 0.1]} castShadow>
             <boxGeometry args={[0.1, 0.7, 0.08]} />
-            <meshStandardMaterial color="#1a1a1a" metalness={0.4} roughness={0.7} />
+            <meshStandardMaterial color="#ffffff" metalness={0.4} roughness={0.7} />
           </mesh>
 
           {/* Wrist rotation (roll, rotation Z) */}
@@ -89,7 +89,7 @@ export function RoboticArm({ angles }) {
             <group ref={wristPitchRef} position={[0, 0, 0]} rotation={[0, 0, 0]}>
               <mesh position={[0, 0.08, 0.02]} castShadow>
                 <boxGeometry args={[0.06, 0.08, 0.04]} />
-                <meshStandardMaterial color="#1a1a1a" metalness={0.4} roughness={0.7} />
+                <meshStandardMaterial color="#ffffff" metalness={0.4} roughness={0.7} />
               </mesh>
               <mesh ref={gripperLeftRef} position={[0, 0.16, 0.02]} castShadow>
                 <boxGeometry args={[0.04, 0.12, 0.03]} />

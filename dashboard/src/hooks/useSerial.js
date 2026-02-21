@@ -7,11 +7,11 @@ import { useState, useCallback, useRef } from 'react'
 export function parseCompactLine(line) {
   const trimmed = line.trim()
   if (!trimmed) return null
-  const s = trimmed.match(/S:(\d+)/)
-  const e = trimmed.match(/E:(\d+)/)
-  const wr = trimmed.match(/WR:(\d+)/)
-  const wp = trimmed.match(/WP:(\d+)/)
-  const g = trimmed.match(/G:(\d+)/)
+  const s = trimmed.match(/S:(-?\d+)/)
+  const e = trimmed.match(/E:(-?\d+)/)
+  const wr = trimmed.match(/WR:(-?\d+)/)
+  const wp = trimmed.match(/WP:(-?\d+)/)
+  const g = trimmed.match(/G:(-?\d+)/)
   if (!s || !e || !wr || !wp || !g) return null
   return {
     shoulder: Math.min(180, Math.max(0, parseInt(s[1], 10))),
@@ -19,6 +19,36 @@ export function parseCompactLine(line) {
     wristRotation: Math.min(180, Math.max(0, parseInt(wr[1], 10))),
     wristPitch: Math.min(180, Math.max(0, parseInt(wp[1], 10))),
     gripper: Math.min(180, Math.max(0, parseInt(g[1], 10))),
+  }
+}
+
+/**
+ * Parses CTRL line: CTRL:LX:<val>,LY:<val>,RX:<val>,RY:<val>,LT:<val>,RT:<val>,A:<0|1>,B:<0|1>,X:<0|1>,Y:<0|1>
+ * Sticks -100..100, triggers 0..100, buttons 0|1.
+ */
+export function parseCtrlLine(line) {
+  const trimmed = line.trim()
+  if (!trimmed.startsWith('CTRL:')) return null
+  const lx = trimmed.match(/LX:(-?\d+)/)?.[1]
+  const ly = trimmed.match(/LY:(-?\d+)/)?.[1]
+  const rx = trimmed.match(/RX:(-?\d+)/)?.[1]
+  const ry = trimmed.match(/RY:(-?\d+)/)?.[1]
+  const lt = trimmed.match(/LT:(-?\d+)/)?.[1]
+  const rt = trimmed.match(/RT:(-?\d+)/)?.[1]
+  const a = trimmed.match(/A:(\d+)/)?.[1]
+  const b = trimmed.match(/B:(\d+)/)?.[1]
+  const x = trimmed.match(/X:(\d+)/)?.[1]
+  const y = trimmed.match(/Y:(\d+)/)?.[1]
+  if (lx == null || ly == null || rx == null || ry == null) return null
+  return {
+    leftStick: { x: Math.max(-100, Math.min(100, parseInt(lx, 10) || 0)), y: Math.max(-100, Math.min(100, parseInt(ly, 10) || 0)) },
+    rightStick: { x: Math.max(-100, Math.min(100, parseInt(rx, 10) || 0)), y: Math.max(-100, Math.min(100, parseInt(ry, 10) || 0)) },
+    lt: Math.max(0, Math.min(100, parseInt(lt, 10) || 0)),
+    rt: Math.max(0, Math.min(100, parseInt(rt, 10) || 0)),
+    a: parseInt(a, 10) ? 1 : 0,
+    b: parseInt(b, 10) ? 1 : 0,
+    x: parseInt(x, 10) ? 1 : 0,
+    y: parseInt(y, 10) ? 1 : 0,
   }
 }
 
@@ -48,6 +78,16 @@ export function useSerial() {
     wristRotation: [],
     wristPitch: [],
     gripper: [],
+  })
+  const [controller, setController] = useState({
+    leftStick: { x: 0, y: 0 },
+    rightStick: { x: 0, y: 0 },
+    lt: 0,
+    rt: 0,
+    a: 0,
+    b: 0,
+    x: 0,
+    y: 0,
   })
   const portRef = useRef(null)
   const readerRef = useRef(null)
@@ -97,6 +137,11 @@ export function useSerial() {
   const processLine = useCallback(
     (line) => {
       appendLog(line)
+      const ctrl = parseCtrlLine(line)
+      if (ctrl) {
+        setController(ctrl)
+        return
+      }
       const parsed = parseCompactLine(line)
       if (!parsed) return
       const vel = computeVelocities({
@@ -192,5 +237,6 @@ export function useSerial() {
     connect,
     disconnect,
     sparklineHistory,
+    controller,
   }
 }

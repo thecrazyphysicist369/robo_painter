@@ -1,10 +1,11 @@
-import { useMemo, Suspense } from 'react'
+import { useMemo, Suspense, useState, useCallback, useEffect } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
-import { Activity, Cpu } from 'lucide-react'
+import { Activity, Cpu, GripVertical } from 'lucide-react'
 import { SerialConnector } from './SerialConnector'
 import { MotorCard } from './MotorCard'
 import { RoboticArm } from './RoboticArm'
+import { XboxControllerVisual } from './XboxControllerVisual'
 import { forwardKinematics } from '../utils/forwardKinematics'
 import { useSerial } from '../hooks/useSerial'
 
@@ -17,8 +18,18 @@ const MOTORS = [
 ]
 
 const RAD2DEG = 180 / Math.PI
+const MIN_SIDEBAR = 180
+const MAX_LEFT = 420
+const MAX_RIGHT = 420
+const DEFAULT_LEFT = 224
+const DEFAULT_RIGHT = 256
 
 export function Dashboard() {
+  const [leftWidth, setLeftWidth] = useState(DEFAULT_LEFT)
+  const [rightWidth, setRightWidth] = useState(DEFAULT_RIGHT)
+  const [resizingLeft, setResizingLeft] = useState(false)
+  const [resizingRight, setResizingRight] = useState(false)
+
   const {
     isConnected,
     angles,
@@ -28,7 +39,34 @@ export function Dashboard() {
     connect,
     disconnect,
     sparklineHistory,
+    controller,
   } = useSerial()
+
+  const handleMouseMove = useCallback(
+    (e) => {
+      if (resizingLeft) setLeftWidth((w) => Math.min(MAX_LEFT, Math.max(MIN_SIDEBAR, w + e.movementX)))
+      if (resizingRight) setRightWidth((w) => Math.min(MAX_RIGHT, Math.max(MIN_SIDEBAR, w - e.movementX)))
+    },
+    [resizingLeft, resizingRight]
+  )
+  const handleMouseUp = useCallback(() => {
+    setResizingLeft(false)
+    setResizingRight(false)
+  }, [])
+
+  useEffect(() => {
+    if (!resizingLeft && !resizingRight) return
+    document.addEventListener('mousemove', handleMouseMove)
+    document.addEventListener('mouseup', handleMouseUp)
+    document.body.style.cursor = 'col-resize'
+    document.body.style.userSelect = 'none'
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+    }
+  }, [resizingLeft, resizingRight, handleMouseMove, handleMouseUp])
 
   const kinematics = useMemo(() => {
     try {
@@ -65,8 +103,11 @@ export function Dashboard() {
       </header>
 
       <div className="flex-1 flex min-h-0">
-        {/* Left Sidebar - Kinematics */}
-        <aside className="w-56 flex-shrink-0 border-r border-orange-500/30 p-4 flex flex-col gap-4" style={{ background: 'rgba(20,20,20,0.9)' }}>
+        {/* Left Sidebar - Kinematics + Xbox */}
+        <aside
+          className="flex-shrink-0 border-r border-orange-500/30 p-4 flex flex-col gap-4 overflow-auto"
+          style={{ width: leftWidth, minWidth: MIN_SIDEBAR, maxWidth: MAX_LEFT, background: 'rgba(20,20,20,0.9)' }}
+        >
           <div className="text-orange-500 font-semibold text-sm flex items-center gap-2">
             <Activity className="w-4 h-4" />
             Kinematics
@@ -74,7 +115,7 @@ export function Dashboard() {
           <div className="space-y-3 text-sm">
             <div>
               <div className="text-white/50 text-xs uppercase tracking-wider mb-0.5">End Effector (X, Y, Z)</div>
-              <div className="text-orange-400 font-mono">
+              <div className="text-orange-400 font-mono text-xs break-all">
                 X: {kinematics.x.toFixed(3)} &nbsp; Y: {kinematics.y.toFixed(3)} &nbsp; Z: {kinematics.z.toFixed(3)}
               </div>
             </div>
@@ -85,7 +126,19 @@ export function Dashboard() {
               </div>
             </div>
           </div>
+          <XboxControllerVisual controller={controller} />
         </aside>
+
+        {/* Resize handle - left */}
+        <div
+          role="separator"
+          aria-label="Resize left panel"
+          className="flex-shrink-0 w-1.5 flex items-center justify-center cursor-col-resize hover:bg-orange-500/30 transition-colors group"
+          style={{ background: resizingLeft ? 'rgba(249,115,22,0.5)' : 'transparent' }}
+          onMouseDown={(e) => e.button === 0 && setResizingLeft(true)}
+        >
+          <GripVertical className="w-3 h-8 text-white/40 group-hover:text-orange-500" />
+        </div>
 
         {/* Center - Three.js Canvas */}
         <main className="flex-1 min-w-0 relative" style={{ minHeight: 300, background: '#000' }}>
@@ -106,8 +159,22 @@ export function Dashboard() {
           </Suspense>
         </main>
 
+        {/* Resize handle - right */}
+        <div
+          role="separator"
+          aria-label="Resize right panel"
+          className="flex-shrink-0 w-1.5 flex items-center justify-center cursor-col-resize hover:bg-orange-500/30 transition-colors group"
+          style={{ background: resizingRight ? 'rgba(249,115,22,0.5)' : 'transparent' }}
+          onMouseDown={(e) => e.button === 0 && setResizingRight(true)}
+        >
+          <GripVertical className="w-3 h-8 text-white/40 group-hover:text-orange-500" />
+        </div>
+
         {/* Right Sidebar - Motor Data */}
-        <aside className="w-64 flex-shrink-0 border-l border-orange-500/30 p-4 flex flex-col gap-3 overflow-auto" style={{ background: 'rgba(20,20,20,0.9)' }}>
+        <aside
+          className="flex-shrink-0 border-l border-orange-500/30 p-4 flex flex-col gap-3 overflow-auto"
+          style={{ width: rightWidth, minWidth: MIN_SIDEBAR, maxWidth: MAX_RIGHT, background: 'rgba(20,20,20,0.9)' }}
+        >
           <div className="text-orange-500 font-semibold text-sm flex items-center gap-2">
             <Cpu className="w-4 h-4" />
             Motor Data

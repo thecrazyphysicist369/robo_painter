@@ -199,6 +199,7 @@ void loop() {
     
     // ===== COMPACT SERIAL FOR WEB DASHBOARD - High rate (20 Hz) =====
     // Format: S:<angle>,E:<angle>,WR:<angle>,WP:<angle>,G:<angle>\n
+    //         CTRL:LX:<val>,LY:<val>,RX:<val>,RY:<val>,LT:<val>,RT:<val>,A:<0|1>,B:<0|1>,X:<0|1>,Y:<0|1>\n
     if (millis() - lastCompactPrint >= compactInterval) {
       Serial.print("S:");
       Serial.print(posShoulder);
@@ -210,6 +211,39 @@ void loop() {
       Serial.print(posWristPitch);
       Serial.print(",G:");
       Serial.println(posGripper);
+
+      // Controller state for dashboard (sticks -100..100, triggers 0..100, buttons 0/1)
+      int lx = map(Xbox.getAnalogHat(LeftHatX), -32768, 32767, -100, 100);
+      int ly = map(Xbox.getAnalogHat(LeftHatY), -32768, 32767, -100, 100);
+      int rx = map(Xbox.getAnalogHat(RightHatX), -32768, 32767, -100, 100);
+      int ry = map(Xbox.getAnalogHat(RightHatY), -32768, 32767, -100, 100);
+      int lt = map(Xbox.getButtonPress(L2), 0, 255, 0, 100);
+      int rt = map(Xbox.getButtonPress(R2), 0, 255, 0, 100);
+      int ba = Xbox.getButtonPress(A) ? 1 : 0;
+      int bb = Xbox.getButtonPress(B) ? 1 : 0;
+      int bx = Xbox.getButtonPress(X) ? 1 : 0;
+      int by = Xbox.getButtonPress(Y) ? 1 : 0;
+      Serial.print("CTRL:LX:");
+      Serial.print(lx);
+      Serial.print(",LY:");
+      Serial.print(ly);
+      Serial.print(",RX:");
+      Serial.print(rx);
+      Serial.print(",RY:");
+      Serial.print(ry);
+      Serial.print(",LT:");
+      Serial.print(lt);
+      Serial.print(",RT:");
+      Serial.print(rt);
+      Serial.print(",A:");
+      Serial.print(ba);
+      Serial.print(",B:");
+      Serial.print(bb);
+      Serial.print(",X:");
+      Serial.print(bx);
+      Serial.print(",Y:");
+      Serial.println(by);
+
       lastCompactPrint = millis();
     }
 

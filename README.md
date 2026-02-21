@@ -1,6 +1,6 @@
 # 🦾 5-DOF Robotic Arm Controller
 
-Arduino-based robotic arm controller using Xbox controller via USB Host Shield. Control 5 servo motors with intuitive joystick and trigger inputs.
+Arduino-based robotic arm controller using Xbox controller via USB Host Shield. Control 5 servo motors with intuitive joystick and trigger inputs. Includes a **Web GUI dashboard** for real-time 3D visualization, kinematics, motor telemetry, and live Xbox controller input.
 
 ![Robotic Arm](https://img.shields.io/badge/Arduino-Compatible-00979D?logo=arduino&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-blue.svg)
@@ -8,6 +8,7 @@ Arduino-based robotic arm controller using Xbox controller via USB Host Shield. 
 ## 📋 Table of Contents
 
 - [Overview](#overview)
+- [Web GUI (Dashboard)](#-web-gui-dashboard)
 - [Hardware Requirements](#hardware-requirements)
 - [Motor Configuration](#motor-configuration)
 - [Wiring Diagram](#wiring-diagram)
@@ -28,6 +29,73 @@ This project enables real-time control of a 5-degree-of-freedom (5-DOF) robotic 
 - **1 Gripper motor** - Clamp open/close
 
 All motors are controlled simultaneously with smooth, responsive movements and real-time position feedback via Serial Monitor.
+
+---
+
+## 🖥️ Web GUI (Dashboard)
+
+A browser-based **Robotic Arm Control Dashboard** lets you visualize the arm in 3D, see live kinematics and motor data, and watch Xbox controller input in real time—all over the same serial connection as the Arduino.
+
+### Screenshot
+
+![Robotic Arm Control Dashboard](robo_gui.png)
+
+> **To show the screenshot on GitHub:** add your dashboard screenshot to the **repo root** as `robo_gui.png`, then commit and push.
+
+### What the dashboard does
+
+- **3D view:** Renders the 5-DOF arm (shoulder, elbow, wrist rotation, wrist pitch, gripper) with white/orange styling. Pose updates live from serial; you can orbit the camera with the mouse.
+- **Kinematics (left panel):** Shows computed **End Effector (X, Y, Z)** and **Orientation (Roll / Pitch / Yaw)** from the current joint angles.
+- **Xbox controller (left panel):** Live view of sticks, triggers (LT/RT), and A/B/X/Y buttons in a white/orange controller graphic with animated indicators.
+- **Motor data (right panel):** Five cards—one per servo—with current angle (0°–180°), angular velocity (ω in deg/s), and a sparkline of recent movement.
+- **Resizable panels:** Drag the vertical dividers between the left panel, center, and right panel to resize; content reflows.
+- **Serial log (bottom):** Raw lines from the Arduino (servo lines and CTRL lines) in a terminal-style log.
+
+### How to install and run the Web GUI
+
+**Prerequisites:** [Node.js](https://nodejs.org/) (LTS) and npm.
+
+1. **Clone or open the repo** (e.g. [thecrazyphysicist369/robo_painter](https://github.com/thecrazyphysicist369/robo_painter)).
+
+2. **Install dependencies and start the dev server:**
+   ```bash
+   cd dashboard
+   npm install
+   npm run dev
+   ```
+
+3. **Open the app** in your browser at the URL shown (e.g. `http://localhost:5173`).
+
+4. **Connect the Arduino:**
+   - Ensure the Arduino is running the sketch that sends the **compact serial format** (see [Arduino output format](#arduino-output-format-for-the-dashboard) below) at **115200** baud.
+   - In the dashboard, click **Connect Serial**, choose your Arduino’s COM port, and connect.
+
+5. **Use the dashboard:** The 3D arm, kinematics, controller view, and motor cards update live. Drag the dividers between the left/center/right areas to resize panels.
+
+**Browser support:** The dashboard uses the **Web Serial API**. Use **Chrome** or **Edge** on **localhost** or **HTTPS**. Other browsers do not support Web Serial.
+
+### Arduino output format for the dashboard
+
+The dashboard expects two line formats from the Arduino (e.g. every ~50 ms when the Xbox controller is connected):
+
+1. **Servo positions:**  
+   `S:<angle>,E:<angle>,WR:<angle>,WP:<angle>,G:<angle>`  
+   Example: `S:90,E:75,WR:110,WP:120,G:45`
+
+2. **Controller state (optional but recommended for the Xbox view):**  
+   `CTRL:LX:<val>,LY:<val>,RX:<val>,RY:<val>,LT:<val>,RT:<val>,A:<0|1>,B:<0|1>,X:<0|1>,Y:<0|1>`  
+   Sticks are -100..100, triggers 0..100, face buttons 0 or 1.
+
+The sketch in `robotic_arm_5motor_/robotic_arm_5motor_.ino` in this repo already sends both when the controller is connected. Re-flash that sketch if the dashboard does not update or the controller panel stays at zero.
+
+### Tech stack (dashboard)
+
+- **React** + **Vite** + **Tailwind CSS**
+- **Three.js** via `@react-three/fiber` and `@react-three/drei`
+- **Web Serial API** for COM port access
+- **Lucide React** for icons
+
+---
 
 ## 🔧 Hardware Requirements
 
