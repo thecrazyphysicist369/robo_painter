@@ -1,0 +1,23 @@
+# Python
+robo_env/
+__pycache__/
+*.pyc
+
+# Node
+dashboard/node_modules/
+dashboard/dist/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Build artifacts
+*.o
+*.elf
+*.hex
